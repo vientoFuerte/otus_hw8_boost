@@ -9,18 +9,30 @@ namespace po = boost::program_options; // псевдоним для сокращ
 
 int main(int argc, char** argv)
 {
-    std::string filename;
+    BayanConfig conf;
     
     // объект хранит информацию о том, какие параметры поддерживает программа
     po::options_description desc("Программа Bayan - поиск дубликатов файлов");
     
     // добавляем параметры, которые будем парсить
     desc.add_options()
-        ("help,h", "Показать справку")
-        ("file,f", po::value<std::string>(&filename), "Имя файла для обработки")
-        ("directory,d", po::value<std::string>(), "Директория для сканирования")
-        ("verbose,v", "Подробный вывод")
-        ("level,l", po::value<int>()->default_value(1), "Уровень сканирования");
+            ("help,h", "Show help message")
+            ("directories,d", po::value<std::vector<std::string>>(&conf.directories)
+                ->multitoken()->required(), 
+                "Directories to scan (can be multiple, required)")
+            ("exclude,e", po::value<std::vector<std::string>>(&conf.exclude_dirs)
+                ->multitoken(), 
+                "Directories to exclude from scanning (can be multiple)")
+            ("level,l", po::value<int>(&conf.scan_depth)->default_value(-1), 
+                "Scan depth (-1=unlimited, 0=current only, 1=one level deep, etc.)")
+            ("min-size,s", po::value<size_t>(&conf.min_size)->default_value(1), 
+                 "Minimum file size in bytes")
+            ("block-size,b", po::value<size_t>(&conf.block_size)->default_value(1024),
+            "Block size for file reading in bytes (default: 1024)")
+            ("mask,m", po::value<std::string>(&conf.file_masks)->default_value("*"), 
+                "File mask filter (e.g., *.txt, *.cpp)")
+            ("algorithm,a", po::value<std::string>(&conf.hash_algorithm)->default_value("md5"), 
+            "Hash algorithm (md5, sha1, crc32, etc.)") ;
         
     // контейнер для хранения распарсенных значений параметров
     po::variables_map vm;
@@ -28,6 +40,14 @@ int main(int argc, char** argv)
     try{
           // сохраняем распарсенные данные в переменную vm
           po::store(po::parse_command_line(argc, argv, desc), vm);
+          
+          
+          // Проверка help до notify, чтобы не требовать обязательные параметры
+          if (vm.count("help")) {
+              std::cout << desc << "\n";
+              return 0;
+          }
+      
           // применяем значения к переменным (например, к filename)
           po::notify(vm);  
     
@@ -40,23 +60,49 @@ int main(int argc, char** argv)
     }
     
     
-    if (vm.count("help")) {
-        std::cout << desc << "\n";
-        return 0;
+    // обращение к аргументам.
+    if (vm.count("directories")) { 
+        std::cout << "Directories to scan:\n";  
+        for (const auto& dir : conf.directories) {  // цикл по всем директориям
+            std::cout << "  - " << dir << "\n";
+        }
+    } else {
+        std::cout << "Параметр 'directories' не указан\n";
     }
     
-    // обращение к аргументам.
-    if (vm.count("directory")) {
-        std::cout << "Параметр 'directory': " << vm["directory"].as<std::string>() << "\n";
-    } else {
-        std::cout << "Параметр 'directory' не указан\n";
+    if (vm.count("exclude")) {
+        std::cout << "Directories to exclude:\n";
+        for (const auto& dir : conf.exclude_dirs) {
+            std::cout << "  - " << dir << "\n";
+        }
+    }
+    
+    if (vm.count("level")) {
+        std::cout << "Scan level: " << conf.scan_depth << "\n";
+    }
+    
+    if (vm.count("block-size")) {
+        std::cout << "Block size: " << conf.block_size << "\n";
+    }
+    
+    if (vm.count("mask")) {
+        std::cout << "File mask: " << conf.file_masks << "\n";
+    }
+    
+    if (vm.count("algorithm")) {
+        std::cout << "Hash algorithm: " << conf.hash_algorithm << "\n";
+    }
+    
+    if (vm.count("min-size")) {
+        std::cout << "Min file size: " << conf.min_size << "\n";
     }
     
     // Выводим все аргументы командной строки (сырые)
-    std::cout << "Всего аргументов: " << argc << "\n";
+    /*std::cout << "Всего аргументов: " << argc << "\n";
     for (int i = 0; i < argc; i++) {
         std::cout << "argv[" << i << "] = " << argv[i] << "\n";
     }
-    std::cout << "\n";
+    std::cout << "\n";*/
   
+  return 0;
 }
