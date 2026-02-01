@@ -12,7 +12,7 @@ int main(int argc, char** argv)
     BayanConfig conf;
     
     // объект хранит информацию о том, какие параметры поддерживает программа
-    po::options_description desc("Программа Bayan - поиск дубликатов файлов");
+    po::options_description desc("Bayan program - file duplicate search);
     
     // добавляем параметры, которые будем парсить
     desc.add_options()
@@ -111,3 +111,4 @@ int main(int argc, char** argv)
   
   return 0;
 }
+
