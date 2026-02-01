@@ -1,12 +1,15 @@
 #include "bayan.h"
+#include <iostream>
 
 
 
-
-void bayan_parser(size_t n, const std::string& currCmd)
+void parse_command_line(BayanConfig& conf)
 {
-    if (n <= 0) return;
-
-    std::cout<< currCmd<<"\n";
+    // Выводим все директории из вектора
+    std::cout << "Directories to scan:\n";
+    for (const auto& dir : conf.directories) {
+        std::cout << "  - " << dir << "\n";
+    }
 
 }
+
