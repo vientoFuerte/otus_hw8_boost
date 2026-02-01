@@ -15,25 +15,21 @@ jobs:
         with:
           submodules: true
       
-      # Устанавливаем и компилируем GTest вместо Boost
-      - run: |
+       # Устанавливаем Boost вместо GTest
+      - name: Install dependencies
+        run: |
           sudo apt-get update
           sudo apt-get install -y \
-            libgtest-dev \
-            libgmock-dev \
             cmake \
-            build-essential \
+            g++ \
+            libboost-program-options-dev \  # Ключевое: Boost.Program_options для парсинга аргументов
+            libboost-filesystem-dev \      # Может понадобиться для работы с файлами
             doxygen \
             graphviz
-          cd /usr/src/googletest
-          sudo cmake CMakeLists.txt
-          sudo make
-          sudo cp lib/libgtest*.a /usr/lib
-          sudo cp lib/libgmock*.a /usr/lib
       
       # Отключаем Boost.Test, используем GTest
-      - run: cmake . -DWITH_BOOST_TEST=OFF
-      - run: cmake . -DWITH_TESTS=ON
+      - run: cmake . -DWITH_BOOST_TEST=ON
+      - run: cmake . -DWITH_TESTS=OFF
       - run: cmake --build .
       
       # Проверяем и запускаем тесты если они есть
@@ -48,7 +44,7 @@ jobs:
       
       - run: cmake --build . --target package
 
-      # Генерируем документацию Doxygen (ИСПРАВЛЕННЫЙ ВАРИАНТ)
+      # Генерируем документацию Doxygen 
       - name: Generate Doxygen documentation
         run: |
           echo "=== Generating Doxygen documentation ==="
