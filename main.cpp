@@ -7,7 +7,7 @@
 
 namespace po = boost::program_options; // псевдоним для сокращения записей
 
-int main(int argc, char* argv[])
+int main(int argc, char** argv)
 {
     std::string filename;
     
@@ -25,16 +25,27 @@ int main(int argc, char* argv[])
     // контейнер для хранения распарсенных значений параметров
     po::variables_map vm;
     
-    // сохраняем распарсенные данные в переменную vm
-    po::store(po::parse_command_line(argc, argv, desc), vm);
-    // применяем значения к переменным (например, к filename)
-        po::notify(vm);
+    try{
+          // сохраняем распарсенные данные в переменную vm
+          po::store(po::parse_command_line(argc, argv, desc), vm);
+          // применяем значения к переменным (например, к filename)
+          po::notify(vm);  
     
-      if (vm.count("help")) {
+    }
+
+    catch(const po::error& e)
+    {
+      std::cerr<<"Error parsing command line: "<<e.what()<<std::endl;
+      return 1;
+    }
+    
+    
+    if (vm.count("help")) {
         std::cout << desc << "\n";
         return 0;
     }
     
+    // обращение к аргументам.
     if (vm.count("directory")) {
         std::cout << "Параметр 'directory': " << vm["directory"].as<std::string>() << "\n";
     } else {
@@ -49,6 +60,3 @@ int main(int argc, char* argv[])
     std::cout << "\n";
   
 }
-
-
-
