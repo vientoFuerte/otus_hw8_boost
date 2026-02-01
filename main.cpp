@@ -29,8 +29,10 @@ int main(int argc, char** argv)
                  "Minimum file size in bytes")
             ("block-size,b", po::value<size_t>(&conf.block_size)->default_value(1024),
             "Block size for file reading in bytes (default: 1024)")
-            ("mask,m", po::value<std::string>(&conf.file_masks)->default_value("*"), 
-                "File mask filter (e.g., *.txt, *.cpp)")
+            ("mask,m", po::value<std::vector<std::string>>(&conf.file_masks)  // Изменено на vector<string>
+                ->multitoken()
+                ->default_value(std::vector<std::string>{"*"}, "*"),  // Значение по умолчанию
+                "File mask filter (e.g., *.txt, *.cpp, can be multiple)")
             ("algorithm,a", po::value<std::string>(&conf.hash_algorithm)->default_value("md5"), 
             "Hash algorithm (md5, sha1, crc32, etc.)") ;
         
@@ -85,8 +87,11 @@ int main(int argc, char** argv)
         std::cout << "Block size: " << conf.block_size << "\n";
     }
     
-    if (vm.count("mask")) {
-        std::cout << "File mask: " << conf.file_masks << "\n";
+     if (vm.count("mask")) {
+        std::cout << "File masks:\n";
+        for (const auto& mask : conf.file_masks) {
+            std::cout << "  - " << mask << "\n";
+        }
     }
     
     if (vm.count("algorithm")) {
