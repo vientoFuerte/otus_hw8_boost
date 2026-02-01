@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.12)
 
 project(bayan)
 
-#option(WITH_BOOST_TEST "Whether to build Boost test" ON)
+option(WITH_BOOST_TEST "Whether to build Boost test" ON)
 # Опция для включения Doxygen
 option(WITH_DOXYGEN "Build Doxygen documentation" OFF)
 
@@ -14,24 +14,39 @@ set_target_properties(bayan PROPERTIES
 )
 
 
-# Тест (если файл test.cpp существует)
-if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test.cpp)
-    # Ищем установленный gtest
-    find_package(GTest REQUIRED)
+# Boost.Test (если включена опция и файл test.cpp существует)
+if(WITH_BOOST_TEST AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test.cpp)
+    # Ищем Boost с библиотекой unit_test_framework
+    find_package(Boost 1.70 REQUIRED COMPONENTS unit_test_framework)  # Изменено: добавили REQUIRED и компонент
+    
+    message(STATUS "Found Boost version: ${Boost_VERSION}")
     
     # Тестовый исполняемый файл
     add_executable(bayan_tests test.cpp bayan.cpp)
     
-    # Линкуем с системным gtest
-    target_link_libraries(bayan_tests PRIVATE GTest::gtest GTest::gtest_main)
+    # Устанавливаем стандарт C++ для тестов
+    set_target_properties(bayan_tests PROPERTIES
+        CXX_STANDARD 17
+        CXX_STANDARD_REQUIRED ON
+    )
+    
+    # Линкуем с Boost.Test библиотекой
+    target_link_libraries(bayan_tests PRIVATE ${Boost_LIBRARIES})  # Изменено: добавляем линковку
+    
+    # Добавляем include директории Boost
+    target_include_directories(bayan_tests PRIVATE ${Boost_INCLUDE_DIRS})
     
     # Тесты
     enable_testing()
     add_test(NAME AllTests COMMAND bayan_tests)
+    
+    message(STATUS "Boost.Test enabled")
+    
+elseif(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test.cpp)
+    message(WARNING "test.cpp found but Boost.Test is disabled. Use -DWITH_BOOST_TEST=ON to enable")
 else()
     message(WARNING "test.cpp not found, tests will not be built")
 endif()
-
 
 if (MSVC)
     target_compile_options(bayan PRIVATE
@@ -57,4 +72,3 @@ set(CPACK_PACKAGE_CONTACT example@example.com)
 
 
 include(CPack)
-
