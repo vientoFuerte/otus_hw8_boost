@@ -8,7 +8,7 @@ option(WITH_DOXYGEN "Build Doxygen documentation" OFF)
 set(Boost_NO_BOOST_CMAKE ON)
 
 # Ищем Boost для основной программы
-find_package(Boost REQUIRED COMPONENTS program_options)
+find_package(Boost REQUIRED COMPONENTS filesystem program_options)
 
 add_executable(bayan main.cpp bayan.cpp)
 
@@ -18,7 +18,12 @@ set_target_properties(bayan PROPERTIES
 )
 
 target_include_directories(bayan PRIVATE ${Boost_INCLUDE_DIRS})
-target_link_libraries(bayan PRIVATE ${Boost_LIBRARIES})
+target_link_libraries(bayan PRIVATE 
+	${Boost_UNIT_TEST_FRAMEWORK_LIBRARY}
+    ${Boost_FILESYSTEM_LIBRARY}
+    ${Boost_SYSTEM_LIBRARY}
+    ${Boost_PROGRAM_OPTIONS_LIBRARY}
+)
 
 # Boost.Test
 if(WITH_BOOST_TEST AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test.cpp)
@@ -35,7 +40,6 @@ if(WITH_BOOST_TEST AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test.cpp)
     target_include_directories(bayan_tests PRIVATE ${Boost_INCLUDE_DIRS})
     target_link_libraries(bayan_tests PRIVATE ${Boost_LIBRARIES})
     
-    # ПРАВИЛЬНОЕ МЕСТО: после создания bayan_tests
     target_compile_definitions(bayan_tests PRIVATE BOOST_TEST_NO_LIB)
     
     enable_testing()
