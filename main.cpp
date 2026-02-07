@@ -2,13 +2,8 @@
 
 #include <iostream>
 #include "bayan.h"
-#include <boost/program_options.hpp> //для парсинга командной строки
-#include <boost/filesystem.hpp>
-#include <boost/crc.hpp>
 
 
-namespace po = boost::program_options; // псевдоним для сокращения записей
-namespace fs = boost::filesystem;
 
 // Функция сбора файлов
  std::vector<FileInfo> collectFiles(const BayanConfig& conf) {
@@ -136,16 +131,21 @@ int main(int argc, char** argv)
         }
   
     if (!conf.directories.empty()) {
-      std::vector<FileInfo> fpath = collectFiles(conf);
+      std::vector<FileInfo> finfo = collectFiles(conf);
+        
+      // Сортировка по размеру с помощью Boost
+      boost::range::sort(finfo, 
+          [](const FileInfo& a, const FileInfo& b) {
+              return a.size < b.size;  // Сортировка по возрастанию
+          });
         
       // Выводим путь к каждому элементу
       std::cout << "\nall directories:"<< std::endl;
-       for (const auto& path : fpath) {
+       for (const auto& inf : finfo) {
           // Выводим путь к каждому элементу
-          std::cout << path.string() << std::endl;
+          std::cout << inf.path.string()<<"  "<< inf.size << std::endl;
       }
     }
   
   return 0;
 }}
-
