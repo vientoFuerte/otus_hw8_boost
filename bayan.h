@@ -3,6 +3,14 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <cstdint> // для std::uintmax_t
+#include <boost/program_options.hpp> //для парсинга командной строки
+#include <boost/filesystem.hpp>
+#include <boost/crc.hpp>
+#include <boost/range/algorithm/sort.hpp>  // Для boost::range::sort
+
+namespace po = boost::program_options; // псевдоним для сокращения записей
+namespace fs = boost::filesystem;
 
 struct FileInfo {
     fs::path path;
@@ -22,6 +30,5 @@ struct BayanConfig {
 };
 
 void bayan_parser(BayanConfig& conf);
-
 
 
