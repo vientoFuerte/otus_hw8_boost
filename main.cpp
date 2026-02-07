@@ -11,13 +11,14 @@ namespace po = boost::program_options; // псевдоним для сокращ
 namespace fs = boost::filesystem;
 
 // Функция сбора файлов
- std::vector<fs::path> collectFiles(const BayanConfig& conf) {
-   std::vector<fs::path> files;
+ std::vector<FileInfo> collectFiles(const BayanConfig& conf) {
+   std::vector<FileInfo> files;
    for (const auto& dir : conf.directories) {
      for (fs::directory_iterator it(dir), end; it != end; ++it) {
         // проверка минимального размера
-         if (fs::file_size(it->path()) >= conf.min_size) {
-             files.push_back(it->path());
+        size_t size = fs::file_size(it->path());
+         if (size >= conf.min_size) {
+             files.push_back({it->path(),size});
          }
       }
     }
@@ -128,17 +129,14 @@ int main(int argc, char** argv)
     std::cout << "\n";*/
   
   //поиск дубликатов
-  
   std::map<unsigned int, std::vector<std::string>> filesByHash;
-  
-  
    if (vm.count("directories")) { 
         for (const auto& dir : conf.directories) {  // цикл по всем директориям
             std::cout << "  - " << dir << "\n";
         }
   
     if (!conf.directories.empty()) {
-      std::vector<fs::path> fpath = collectFiles(conf);
+      std::vector<FileInfo> fpath = collectFiles(conf);
         
       // Выводим путь к каждому элементу
       std::cout << "\nall directories:"<< std::endl;
@@ -150,3 +148,4 @@ int main(int argc, char** argv)
   
   return 0;
 }}
+
