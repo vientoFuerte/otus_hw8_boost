@@ -3,16 +3,19 @@
 #include <iostream>
 #include "bayan.h"
 #include <boost/program_options.hpp> //для парсинга командной строки
+#include <boost/filesystem.hpp>
+#include <boost/crc.hpp>
 
 
 namespace po = boost::program_options; // псевдоним для сокращения записей
+namespace fs = boost::filesystem;
 
 int main(int argc, char** argv)
 {
     BayanConfig conf;
     
     // объект хранит информацию о том, какие параметры поддерживает программа
-    po::options_description desc("Bayan program - file duplicate search);
+    po::options_description desc("Bayan program - file duplicate search");
     
     // добавляем параметры, которые будем парсить
     desc.add_options()
@@ -29,7 +32,7 @@ int main(int argc, char** argv)
                  "Minimum file size in bytes")
             ("block-size,b", po::value<size_t>(&conf.block_size)->default_value(1024),
             "Block size for file reading in bytes (default: 1024)")
-            ("mask,m", po::value<std::vector<std::string>>(&conf.file_masks)  // Изменено на vector<string>
+            ("mask,m", po::value<std::vector<std::string>>(&conf.file_masks) 
                 ->multitoken()
                 ->default_value(std::vector<std::string>{"*"}, "*"),  // Значение по умолчанию
                 "File mask filter (e.g., *.txt, *.cpp, can be multiple)")
@@ -109,6 +112,31 @@ int main(int argc, char** argv)
     }
     std::cout << "\n";*/
   
-  return 0;
-}
+  //поиск дубликатов
+  
+  std::map<unsigned int, std::vector<std::string>> filesByHash;
+  
+  
+   if (vm.count("directories")) { 
+        for (const auto& dir : conf.directories) {  // цикл по всем директориям
+            std::cout << "  - " << dir << "\n";
+        }
+  
+    if (!conf.directories.empty()) {
 
+       for (const auto& dir : conf.directories) {  // цикл по всем директориям
+          // Проходим по всем элементам в текущей директории
+          
+          std::cout << std::endl<< dir<<":"<< std::endl;
+          for (fs::directory_iterator it(dir), end; it != end; ++it) {
+              // Выводим путь к каждому элементу
+              std::cout << it->path().string() << std::endl;
+          }
+        }    
+    }
+
+
+
+  
+  return 0;
+}}
