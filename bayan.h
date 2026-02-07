@@ -4,6 +4,10 @@
 #include <string>
 #include <iostream>
 
+struct FileInfo {
+    fs::path path;
+    uintmax_t size;
+};
 
 struct BayanConfig {
     std::vector<std::string> directories;
@@ -18,5 +22,6 @@ struct BayanConfig {
 };
 
 void bayan_parser(BayanConfig& conf);
+
 
 
