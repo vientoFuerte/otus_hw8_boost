@@ -8,7 +8,7 @@ option(WITH_DOXYGEN "Build Doxygen documentation" OFF)
 set(Boost_NO_BOOST_CMAKE ON)
 
 # Ищем Boost для основной программы
-find_package(Boost REQUIRED COMPONENTS filesystem program_options)
+find_package(Boost REQUIRED COMPONENTS filesystem system program_options)
 
 add_executable(bayan main.cpp bayan.cpp)
 
@@ -28,7 +28,7 @@ target_link_libraries(bayan PRIVATE
 # Boost.Test
 if(WITH_BOOST_TEST AND EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/test.cpp)
     # Для тестов нужен unit_test_framework
-    find_package(Boost REQUIRED COMPONENTS unit_test_framework program_options)
+    find_package(Boost REQUIRED COMPONENTS unit_test_framework filesystem program_options)
     
     add_executable(bayan_tests test.cpp bayan.cpp)
     
