@@ -9,7 +9,8 @@
 #include <boost/filesystem.hpp>
 #include <boost/crc.hpp>
 #include <boost/range/algorithm/sort.hpp>  // Для boost::range::sort
-
+#include <boost/regex.hpp>
+#include <fnmatch.h>
 
 
 namespace po = boost::program_options; // псевдоним для сокращения записей
@@ -43,3 +44,5 @@ std::vector<std::vector<FileInfo>> extractSameSizeGroups(std::vector<FileInfo>& 
 
 // Функция сбора файлов
  std::vector<FileInfo> collectFiles(const BayanConfig& conf);
+ 
+bool matchesMask(const std::string& filename, const std::vector<std::string>& masks);
