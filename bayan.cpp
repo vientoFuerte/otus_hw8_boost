@@ -1,15 +1,115 @@
 #include "bayan.h"
-#include <iostream>
 
 
-
-void parse_command_line(BayanConfig& conf)
-{
-    // Выводим все директории из вектора
-    std::cout << "Directories to scan:\n";
-    for (const auto& dir : conf.directories) {
-        std::cout << "  - " << dir << "\n";
+// Функция сбора файлов
+ std::vector<FileInfo> collectFiles(const BayanConfig& conf) {
+   std::vector<FileInfo> files;
+   for (const auto& dir : conf.directories) {
+     for (fs::directory_iterator it(dir), end; it != end; ++it) {
+        // проверка минимального размера
+        size_t size = fs::file_size(it->path());
+         if (size >= conf.min_size) {
+             files.push_back({it->path(),size});
+         }
+      }
     }
-
+   return files;
+ }
+ 
+ 
+// Функция для выделения групп файлов одного размера
+std::vector<std::vector<FileInfo>> extractSameSizeGroups(std::vector<FileInfo>& finfo) {
+    std::vector<std::vector<FileInfo>> groups;
+    
+    // Используем два указателя для выделения групп
+    auto group_start = finfo.begin();
+    auto current = finfo.begin();
+    
+    while (current != finfo.end())
+    {
+        // Запоминаем размер текущей группы
+        uintmax_t current_size = group_start->size;
+        // Пока не достигли конца и размер одинаковый
+        while (current != finfo.end() && current->size == current_size) {
+            ++current;
+        }   
+        // Если в группе больше одного файла
+        if (std::distance(group_start, current) > 1) {
+            // Копируем группу
+            groups.emplace_back(group_start, current);
+        }      
+        // Переходим к следующей группе
+        group_start = current;
+        
+    }
+    return groups;
 }
 
+// Функция для сравнения двух файлов одного размера по конкретному блоку
+bool compareSingleBlock(const FileInfo& fi1, const FileInfo& fi2, size_t block_size, size_t blockNum) {
+    
+    std::ifstream f1(fi1.path, std::ios::binary);
+    std::ifstream f2(fi2.path, std::ios::binary);
+    
+    if (!f1.is_open() || !f2.is_open()) {
+        return false;
+    }
+    
+    // Вычисляем смещение для текущего блока
+    size_t offset = blockNum * block_size;
+    
+    // Проверяем, не выходим ли мы за пределы файла
+    if (offset >= fi1.size) {
+        // Блок за пределами файла - считаем их идентичными
+        // (оба файла имеют одинаковый размер, поэтому оба за пределами)
+        return true;
+    }
+    
+    // Вычисляем сколько байт нужно прочитать
+    size_t bytes_to_read = std::min(block_size, fi1.size - offset);
+    
+    std::vector<char> buffer1(block_size, 0);
+    std::vector<char> buffer2(block_size, 0);
+    
+    // Читаем блоки
+    f1.seekg(offset, std::ios::beg);
+    f2.seekg(offset, std::ios::beg);
+    
+    f1.read(buffer1.data(), bytes_to_read);
+    f2.read(buffer2.data(), bytes_to_read);
+    
+    // Проверяем, сколько байт было фактически прочитано
+    size_t actually_read1 = f1.gcount();
+    size_t actually_read2 = f2.gcount();
+    
+    if (actually_read1 != actually_read2 || actually_read1 != bytes_to_read) {
+        return false; // Ошибка чтения
+    }
+    
+    // Дополняем нулями если нужно (для последнего блока)
+    if (bytes_to_read < block_size) {
+        std::fill(buffer1.begin() + bytes_to_read, buffer1.end(), 0);
+        std::fill(buffer2.begin() + bytes_to_read, buffer2.end(), 0);
+    }
+    
+    // Вычисляем CRC32
+    boost::crc_32_type crc1, crc2;
+    crc1.process_bytes(buffer1.data(), block_size);
+    crc2.process_bytes(buffer2.data(), block_size);
+    
+    return crc1.checksum() == crc2.checksum();
+}
+
+// Функция для полного сравнения файлов по всем блокам
+bool areFilesIdentical(const FileInfo& fi1, const FileInfo& fi2, size_t block_size) {
+     
+    size_t total_blocks = (fi1.size + block_size - 1) / block_size;
+    
+    for (size_t blockNum = 0; blockNum < total_blocks; ++blockNum) {
+        if (!compareSingleBlock(fi1, fi2, block_size, blockNum)) {
+            return false;
+        }
+    }
+    
+    return true;
+}
