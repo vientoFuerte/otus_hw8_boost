@@ -8,7 +8,9 @@
      for (fs::directory_iterator it(dir), end; it != end; ++it) {
         // проверка минимального размера
         size_t size = fs::file_size(it->path());
-         if (size >= conf.min_size) {
+        // Проверяем маску файла - передаем только имя файла!
+        std::string filename = it->path().filename().string();
+         if ((size >= conf.min_size) && matchesMask(filename, conf.file_masks)) {
              files.push_back({it->path(),size});
          }
       }
@@ -110,6 +112,33 @@ bool areFilesIdentical(const FileInfo& fi1, const FileInfo& fi2, size_t block_si
             return false;
         }
     }
-    
+
     return true;
 }
+
+
+bool matchesMask(const std::string& filename, const std::vector<std::string>& masks) {
+    // Если масок нет - файл проходит
+    if (masks.empty()) {
+        return true;
+    }
+    
+    // Если есть специальная маска "*" - все файлы проходят
+    for (const auto& mask : masks) {
+        if (mask == "*") {
+            return true;
+        }
+    }
+    
+    // Проверяем каждую маску
+    for (const auto& mask : masks) {
+        // Используем FNM_CASEFOLD для регистронезависимого сравнения
+        // и FNM_PATHNAME чтобы '*' не совпадал с '/' (для путей)
+        if (fnmatch(mask.c_str(), filename.c_str(), FNM_CASEFOLD | FNM_PATHNAME) == 0) {
+            return true;
+        }
+    }
+    
+    return false;
+}
+
