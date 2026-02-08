@@ -21,6 +21,40 @@
  }
  
  
+// Функция для выделения групп файлов одного размера
+std::vector<std::vector<FileInfo>> extractSameSizeGroups(std::vector<FileInfo>& finfo) {
+    std::vector<std::vector<FileInfo>> groups;
+    
+    // Используем два указателя для выделения групп
+    auto group_start = finfo.begin();
+    auto current = finfo.begin();
+    
+    while (current != finfo.end())
+    {
+        // Запоминаем размер текущей группы
+        uintmax_t current_size = group_start->size;
+        // Пока не достигли конца и размер одинаковый
+        while (current != finfo.end() && current->size == current_size) {
+            ++current;
+        }
+             
+        // Если в группе больше одного файла
+        if (std::distance(group_start, current) > 1) {
+            // Копируем группу
+            groups.emplace_back(group_start, current);
+        }
+        
+        // Переходим к следующей группе
+        group_start = current;
+        
+    }
+    
+    
+ return groups;
+}
+
+
+
 int main(int argc, char** argv)
 {
     BayanConfig conf;
@@ -133,19 +167,28 @@ int main(int argc, char** argv)
     if (!conf.directories.empty()) {
       std::vector<FileInfo> finfo = collectFiles(conf);
         
-      // Сортировка по размеру с помощью Boost
+      // Сортировка по размеру с помощью Boost (файлы разного размера не могут быть одинаковыми)
       boost::range::sort(finfo, 
           [](const FileInfo& a, const FileInfo& b) {
               return a.size < b.size;  // Сортировка по возрастанию
           });
+      // Разбили на группы одинакового размера (в каждой больше одного файла).
+      auto same_size_groups = extractSameSizeGroups(finfo);
         
       // Выводим путь к каждому элементу
       std::cout << "\nall directories:"<< std::endl;
-       for (const auto& inf : finfo) {
-          // Выводим путь к каждому элементу
-          std::cout << inf.path.string()<<"  "<< inf.size << std::endl;
+       for (const auto& group : same_size_groups) {
+          for (const auto& inf : group) {
+              // Выводим путь к каждому элементу
+              std::cout << inf.path.string()<<"  "<< inf.size << std::endl;  
+          }
+          std::cout << std::endl;  
+          //std::ifstream file(filename, std::ios::binary);
+         // std::vector<std::string> block_hashes;
+          //std::vector<char> buffer(block_size);
+
       }
     }
-  
+ }
   return 0;
-}}
+}
