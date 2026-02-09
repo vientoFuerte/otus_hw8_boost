@@ -37,7 +37,7 @@ struct BayanConfig {
 bool areFilesIdentical(const FileInfo& fi1, const FileInfo& fi2, size_t block_size);
 
 // Функция для сравнения двух файлов одного размера по конкретному блоку
-bool compareSingleBlock(const FileInfo& fi1, const FileInfo& fi2, size_t block_size, size_t blockNum);
+bool compareSingleBlock(std::ifstream& f1, std::ifstream& f2, size_t file_size, size_t block_size, size_t blockNum);
 
 // Функция для выделения групп файлов одного размера
 std::vector<std::vector<FileInfo>> extractSameSizeGroups(std::vector<FileInfo>& finfo);
@@ -45,4 +45,5 @@ std::vector<std::vector<FileInfo>> extractSameSizeGroups(std::vector<FileInfo>& 
 // Функция сбора файлов
  std::vector<FileInfo> collectFiles(const BayanConfig& conf);
  
+ //Сравнение имени файла с маской
 bool matchesMask(const std::string& filename, const std::vector<std::string>& masks);
