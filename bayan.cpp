@@ -48,27 +48,18 @@ std::vector<std::vector<FileInfo>> extractSameSizeGroups(std::vector<FileInfo>& 
 }
 
 // Функция для сравнения двух файлов одного размера по конкретному блоку
-bool compareSingleBlock(const FileInfo& fi1, const FileInfo& fi2, size_t block_size, size_t blockNum) {
-    
-    std::ifstream f1(fi1.path, std::ios::binary);
-    std::ifstream f2(fi2.path, std::ios::binary);
-    
-    if (!f1.is_open() || !f2.is_open()) {
-        return false;
-    }
-    
-    // Вычисляем смещение для текущего блока
+bool compareSingleBlock(std::ifstream& f1, std::ifstream& f2, size_t file_size, size_t block_size, size_t blockNum) {
+     
+   // Вычисляем смещение для текущего блока
     size_t offset = blockNum * block_size;
     
     // Проверяем, не выходим ли мы за пределы файла
-    if (offset >= fi1.size) {
-        // Блок за пределами файла - считаем их идентичными
-        // (оба файла имеют одинаковый размер, поэтому оба за пределами)
+    if (offset >= file_size) {
         return true;
     }
     
     // Вычисляем сколько байт нужно прочитать
-    size_t bytes_to_read = std::min(block_size, fi1.size - offset);
+    size_t bytes_to_read = std::min(block_size, file_size - offset);
     
     std::vector<char> buffer1(block_size, 0);
     std::vector<char> buffer2(block_size, 0);
@@ -105,10 +96,19 @@ bool compareSingleBlock(const FileInfo& fi1, const FileInfo& fi2, size_t block_s
 // Функция для полного сравнения файлов по всем блокам
 bool areFilesIdentical(const FileInfo& fi1, const FileInfo& fi2, size_t block_size) {
      
+    // Открываем файлы для чтения
+    std::ifstream f1(fi1.path, std::ios::binary);
+    std::ifstream f2(fi2.path, std::ios::binary);
+    
+    // Проверяем, успешно ли открыты файлы
+    if (!f1.is_open() || !f2.is_open()) {
+        return false;
+    }
+    
     size_t total_blocks = (fi1.size + block_size - 1) / block_size;
     
     for (size_t blockNum = 0; blockNum < total_blocks; ++blockNum) {
-        if (!compareSingleBlock(fi1, fi2, block_size, blockNum)) {
+        if (!compareSingleBlock(f1, f2, fi1.size, block_size, blockNum)) {
             return false;
         }
     }
