@@ -22,6 +22,8 @@ jobs:
             g++ \
             libboost-program-options-dev \
             libboost-filesystem-dev \
+            libboost-regex-dev \
+            libboost-system-dev \
             doxygen \
             graphviz
       
