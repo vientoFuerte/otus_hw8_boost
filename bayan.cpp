@@ -1,22 +1,64 @@
 #include "bayan.h"
 
+// Функция проверки, нужно ли исключить путь
+bool isExcluded(const fs::path& p, const std::vector<std::string>& exclude_dirs) {
+    // Нормализуем путь (убираем ".", ".." и приводим к абсолютному виду при необходимости)
+    fs::path normalized = fs::absolute(p).lexically_normal();
+    for (const auto& excl : exclude_dirs) {
+        fs::path excl_path = fs::absolute(excl).lexically_normal();
+        // Если текущий путь является поддиректорией исключённой, возвращаем true
+        if (fs::equivalent(normalized, excl_path) || 
+            normalized.string().find(excl_path.string()) == 0) {
+            return true;
+        }
+    }
+    return false;
+}
 
 // Функция сбора файлов
- std::vector<FileInfo> collectFiles(const BayanConfig& conf) {
-   std::vector<FileInfo> files;
-   for (const auto& dir : conf.directories) {
-     for (fs::directory_iterator it(dir), end; it != end; ++it) {
-        // проверка минимального размера
-        size_t size = fs::file_size(it->path());
-        // Проверяем маску файла - передаем только имя файла!
-        std::string filename = it->path().filename().string();
-         if ((size >= conf.min_size) && matchesMask(filename, conf.file_masks)) {
-             files.push_back({it->path(),size});
-         }
-      }
+std::vector<FileInfo> collectFiles(const BayanConfig& conf) {
+    std::vector<FileInfo> files;
+    
+    for (const auto& start_dir_str : conf.directories) {
+        fs::path start_dir(start_dir_str);
+        
+        // Пропускаем, если стартовая директория исключена
+        if (isExcluded(start_dir, conf.exclude_dirs)) {
+            continue;
+        }
+        
+        fs::recursive_directory_iterator it(start_dir), end;
+        
+        while (it != end) {
+            // Ограничение глубины (если задано)
+            if (conf.scan_depth >= 0 && it.depth() >= conf.scan_depth) {
+                it.disable_recursion_pending();
+            }
+            
+            const auto& path = it->path();
+            
+            // Если текущий элемент - исключённая директория, не заходим в неё
+            if (fs::is_directory(path) && isExcluded(path, conf.exclude_dirs)) {
+                it.disable_recursion_pending();
+                ++it;
+                continue;
+            }
+            
+            // Обрабатываем обычные файлы
+            if (fs::is_regular_file(path)) {
+                uintmax_t size = fs::file_size(path);
+                std::string filename = path.filename().string();
+                if (size >= conf.min_size && matchesMask(filename, conf.file_masks)) {
+                    files.push_back({path, size});
+                }
+            }
+            
+            ++it; // переход к следующему элементу
+        }
     }
-   return files;
- }
+    
+    return files;
+}
  
  
 // Функция для выделения групп файлов одного размера
