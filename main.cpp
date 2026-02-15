@@ -31,15 +31,14 @@ int main(int argc, char** argv)
                 "File mask filter (e.g., *.txt, *.cpp, can be multiple)")
             ("algorithm,a", po::value<std::string>(&conf.hash_algorithm)->default_value("crc32"), 
             "Hash algorithm (md5, sha1, crc32, etc.)") ;
-        
+
     // контейнер для хранения распарсенных значений параметров
     po::variables_map vm;
     
     try{
           // сохраняем распарсенные данные в переменную vm
           po::store(po::parse_command_line(argc, argv, desc), vm);
-          
-          
+
           // Проверка help до notify, чтобы не требовать обязательные параметры
           if (vm.count("help")) {
               std::cout << desc << "\n";
@@ -56,54 +55,9 @@ int main(int argc, char** argv)
       std::cerr<<"Error parsing command line: "<<e.what()<<std::endl;
       return 1;
     }
-    
-    
-    // обращение к аргументам.
-    if (vm.count("directories")) { 
-        std::cout << "Directories to scan:\n";  
-        for (const auto& dir : conf.directories) {  // цикл по всем директориям
-            std::cout << "  - " << dir << "\n";
-        }
-    } else {
-        std::cout << "Параметр 'directories' не указан\n";
-    }
-    
-    if (vm.count("exclude")) {
-        std::cout << "Directories to exclude:\n";
-        for (const auto& dir : conf.exclude_dirs) {
-            std::cout << "  - " << dir << "\n";
-        }
-    }
-    
-    if (vm.count("level")) {
-        std::cout << "Scan level: " << conf.scan_depth << "\n";
-    }
-    
-    if (vm.count("block-size")) {
-        std::cout << "Block size: " << conf.block_size << "\n";
-    }
-    
-     if (vm.count("mask")) {
-        std::cout << "File masks:\n";
-        for (const auto& mask : conf.file_masks) {
-            std::cout << "  - " << mask << "\n";
-        }
-    }
-    
-    if (vm.count("algorithm")) {
-        std::cout << "Hash algorithm: " << conf.hash_algorithm << "\n";
-    }
-    
-    if (vm.count("min-size")) {
-        std::cout << "Min file size: " << conf.min_size << "\n";
-    }
 
-  //поиск дубликатов
-  std::map<unsigned int, std::vector<std::string>> filesByHash;
-   if (vm.count("directories")) { 
-        for (const auto& dir : conf.directories) {  // цикл по всем директориям
-            std::cout << "  - " << dir << "\n";
-        }
+    //поиск дубликатов
+    std::map<unsigned int, std::vector<std::string>> filesByHash;
   
     if (!conf.directories.empty()) {
       std::vector<FileInfo> finfo = collectFiles(conf);
@@ -116,7 +70,7 @@ int main(int argc, char** argv)
       // Разбили на группы одинакового размера (в каждой больше одного файла).
       auto same_size_groups = extractSameSizeGroups(finfo);
 
-       for (const auto& group : same_size_groups) {
+       for (auto& group : same_size_groups) {
        
         // Список найденных дубликатов
         std::vector<std::string>duplicates;
@@ -134,8 +88,8 @@ int main(int argc, char** argv)
               }
           }
 
-          std::cout << "\nDuplicate found: " << std::endl;
-          for (const auto& path : duplicates) {
+          std::cout<< std::endl;
+          for (auto& path : duplicates) {
               // Выводим путь к каждому элементу
               std::cout << path<< std::endl;
           }
@@ -143,6 +97,5 @@ int main(int argc, char** argv)
           std::cout << std::endl;
       }
     }
- }
   return 0;
 }
