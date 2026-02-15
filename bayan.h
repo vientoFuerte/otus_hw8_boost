@@ -19,6 +19,7 @@ namespace fs = boost::filesystem;
 struct FileInfo {
     fs::path path;
     uintmax_t size;
+    std::vector<uint32_t> block_hashes;       // хэши блоков (CRC32)
 };
 
 struct BayanConfig {
@@ -47,3 +48,4 @@ std::vector<std::vector<FileInfo>> extractSameSizeGroups(std::vector<FileInfo>& 
  
  //Сравнение имени файла с маской
 bool matchesMask(const std::string& filename, const std::vector<std::string>& masks);
+
